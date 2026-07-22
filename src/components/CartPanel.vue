@@ -1,4 +1,5 @@
 <template>
+  <!-- 购物车抽屉容器，控制购物车面板的打开和关闭。 -->
   <el-drawer
     :visible.sync="localVisible"
     direction="rtl"
@@ -9,6 +10,7 @@
     @open="handleOpen"
   >
     <div class="cart-panel" aria-labelledby="cart-title">
+      <!-- 购物车面板头部，显示标题和关闭按钮。 -->
       <div class="cart-panel__header">
         <div>
           <span class="cart-panel__eyebrow">YOUR SELECTION</span>
@@ -17,12 +19,15 @@
         <button type="button" class="drawer-close" aria-label="关闭购物车" @click="close">×</button>
       </div>
 
+      <!-- 购物车内容区域，根据加载、错误和空购物车状态显示不同内容。 -->
       <div class="cart-panel__content">
+        <!-- 正在加载购物车时，显示加载提示。 -->
         <div v-if="cartLoading" class="cart-state" aria-live="polite">
           <i class="el-icon-loading cart-state__icon" />
           <span>正在加载购物车...</span>
         </div>
 
+        <!-- 加载购物车失败时，显示错误信息和重新加载按钮。 -->
         <el-alert
           v-else-if="cartError"
           class="cart-error"
@@ -34,13 +39,16 @@
           <el-button type="text" @click="loadCart">重新加载</el-button>
         </el-alert>
 
+        <!-- 购物车为空时，显示空购物车提示。 -->
         <div v-else-if="isCartEmpty" class="cart-state">
           <i class="el-icon-shopping-cart-2 cart-state__icon" />
           <strong>购物车还是空的</strong>
           <span>把喜欢的商品加入购物车吧</span>
         </div>
 
+        <!-- 购物车有商品时，显示选择工具栏和商品明细。 -->
         <template v-else>
+          <!-- 商品选择工具栏，支持全选并显示已选商品数量。 -->
           <div class="selection-toolbar">
             <el-checkbox
               :value="allSelected"
@@ -52,6 +60,7 @@
             <span>已选 {{ selectedCount }} 件商品</span>
           </div>
 
+          <!-- 商品明细列表，支持选择、调整数量和删除商品。 -->
           <div class="cart-items">
             <article v-for="item in cartItems" :key="item.id" class="cart-item">
               <el-checkbox
@@ -107,6 +116,7 @@
         </template>
       </div>
 
+      <!-- 购物车有可结算商品时，显示已选金额和结算按钮。 -->
       <footer v-if="!cartLoading && !cartError && !isCartEmpty" class="cart-panel__footer">
         <div class="cart-total">
           <span>合计（已选 {{ selectedCount }} 件）</span>

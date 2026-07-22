@@ -16,6 +16,7 @@
       />
     </div>
 
+    <!-- 正在加载商品时，显示商品骨架屏。 -->
     <div v-if="productsLoading" class="product-grid" aria-live="polite">
       <div v-for="index in pageSize" :key="`skeleton-${index}`" class="product-card product-card--skeleton">
         <div class="skeleton-image" />
@@ -24,6 +25,7 @@
       </div>
     </div>
 
+    <!-- 加载失败时，显示错误信息和重新加载按钮。 -->
     <el-alert
       v-else-if="productsError"
       class="state-message"
@@ -35,12 +37,14 @@
       <el-button type="text" @click="retryProducts">重新加载</el-button>
     </el-alert>
 
+    <!-- 加载成功但没有商品时，显示空结果提示。 -->
     <div v-else-if="!products.length" class="empty-state">
       <i class="el-icon-search empty-state__icon" />
       <strong>没有找到相关商品</strong>
       <span>换个关键词试试看</span>
     </div>
 
+    <!-- 有商品时，显示商品列表。 -->
     <div v-else class="product-grid">
       <article v-for="product in products" :key="product.id" class="product-card">
         <div class="product-image-wrap">
@@ -51,6 +55,7 @@
             <h2>{{ product.name }}</h2>
             <span class="stock">库存 {{ product.stock }}</span>
           </div>
+
           <div class="product-card__footer">
             <strong class="price">¥ {{ money(product.price) }}</strong>
             <el-button
@@ -66,6 +71,7 @@
       </article>
     </div>
 
+    <!-- 商品总数超过一页且当前没有加载或错误时，显示分页控件。 -->
     <div v-if="totalProducts > pageSize && !productsLoading && !productsError" class="pagination-row">
       <el-pagination
         background

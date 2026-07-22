@@ -31,14 +31,21 @@ export default new Vuex.Store({
   },
 
   getters: {
+    // 计算购物车中的商品条目数量。
     cartCount: (state) => state.cartItems.length,
+    // 计算已选中的商品数量。
     selectedCount: (state) => state.cartItems.filter((item) => item.selected).length,
+    // 计算所有已选商品的总金额。
     selectedTotal: (state) => state.cartItems
       .filter((item) => item.selected)
       .reduce((total, item) => total + Number(item.price) * Number(item.quantity), 0),
+    // 判断购物车中的商品是否全部被选中。
     allSelected: (state) => state.cartItems.length > 0 && state.cartItems.every((item) => item.selected),
+    // 判断购物车中是否至少有一个商品被选中。
     someSelected: (state) => state.cartItems.some((item) => item.selected),
+    // 判断购物车是否为空。
     isCartEmpty: (state) => state.cartItems.length === 0,
+    // 根据商品 ID 判断该商品是否正在加载或更新。
     isCartItemLoading: (state) => (id) => state.cartItemLoadingIds.includes(id),
   },
 
