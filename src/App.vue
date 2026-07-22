@@ -2,9 +2,9 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="brand-mark">Mini Shop</div>
-      <button
+      <el-button
         class="cart-trigger"
-        type="button"
+        native-type="button"
         :aria-expanded="cartVisible.toString()"
         aria-label="打开购物车"
         @click="openCart"
@@ -16,7 +16,7 @@
         </svg>
         <span>购物车</span>
         <span v-if="cartCount" class="cart-count">{{ cartCount }}</span>
-      </button>
+      </el-button>
     </header>
 
     <main class="main-content">
@@ -28,7 +28,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import ProductList from './components/ProductList.vue'
 import CartPanel from './components/CartPanel.vue'
 
@@ -41,7 +40,9 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['cartCount']),
+    cartCount() {
+      return this.$store.getters.cartCount
+    },
   },
   methods: {
     openCart() {

@@ -20,7 +20,6 @@ const products = [
   { id: 16, name: '数据线收纳盒', price: 49, stock: 40, image: 'https://picsum.photos/seed/cablebox/640/420' },
 ]
 
-let nextCartId = 102
 let cartItems = [
   {
     id: 101,
@@ -40,24 +39,22 @@ mock.onGet('/products').reply((config) => {
   const { page = 1, pageSize = 8, keyword = '' } = config.params || {}
   const normalizedKeyword = String(keyword).trim().toLowerCase()
   const filtered = products.filter((product) => product.name.toLowerCase().includes(normalizedKeyword))
-  const normalizedPage = Math.max(Number(page) || 1, 1)
-  const normalizedPageSize = Math.max(Number(pageSize) || 8, 1)
-  const start = (normalizedPage - 1) * normalizedPageSize
+  const start = (Number(page) - 1) * Number(pageSize)
 
   return ok({
-    list: filtered.slice(start, start + normalizedPageSize),
+    list: filtered.slice(start, start + Number(pageSize)),
     total: filtered.length,
-    page: normalizedPage,
-    pageSize: normalizedPageSize,
+    page: Number(page),
+    pageSize: Number(pageSize),
   })
 })
 
 mock.onGet('/cart-items').reply(() => ok(cartItems))
 
 mock.onPost('/cart-items').reply((config) => {
-  const payload = typeof config.data === 'string' ? JSON.parse(config.data) : config.data
+  const payload = JSON.parse(config.data)
   const item = {
-    id: nextCartId++,
+    id: Date.now(),
     selected: true,
     ...payload,
   }
@@ -65,9 +62,9 @@ mock.onPost('/cart-items').reply((config) => {
   return ok(item)
 })
 
-mock.onPatch(/\/cart-items\/\d+$/).reply((config) => {
+mock.onPatch(/\/cart-items\/\d+/).reply((config) => {
   const id = Number(config.url.split('/').pop())
-  const payload = typeof config.data === 'string' ? JSON.parse(config.data) : config.data
+  const payload = JSON.parse(config.data)
   const item = cartItems.find((cartItem) => cartItem.id === id)
 
   if (!item) {
@@ -78,10 +75,9 @@ mock.onPatch(/\/cart-items\/\d+$/).reply((config) => {
   return ok(item)
 })
 
-mock.onDelete(/\/cart-items\/\d+$/).reply((config) => {
+mock.onDelete(/\/cart-items\/\d+/).reply((config) => {
   const id = Number(config.url.split('/').pop())
   cartItems = cartItems.filter((item) => item.id !== id)
   return [204]
 })
 
-export default mock

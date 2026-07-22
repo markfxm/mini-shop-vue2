@@ -95,8 +95,8 @@ export default new Vuex.Store({
 
   actions: {
     async fetchProducts({ commit }, params = {}) {
-      const page = Number(params.page) || 1
-      const keyword = String(params.keyword == null ? '' : params.keyword).trim()
+      const page = params.page
+      const keyword = params.keyword
       commit('SET_PRODUCT_QUERY', { page, keyword })
       commit('SET_PRODUCTS_LOADING', true)
       commit('SET_PRODUCTS_ERROR', '')
