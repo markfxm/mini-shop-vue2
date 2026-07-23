@@ -1,22 +1,20 @@
 <template>
   <!-- 购物车抽屉容器，控制购物车面板的打开和关闭。 -->
   <el-drawer
+    title="购物车"
     :visible.sync="localVisible"
     direction="rtl"
-    size="min(560px, 42vw)"
-    :with-header="false"
+    size="min(680px, 50vw)"
+    :with-header="true"
     :wrapper-closable="true"
     custom-class="cart-drawer"
     @open="handleOpen"
   >
     <div class="cart-panel" aria-labelledby="cart-title">
-      <!-- 购物车面板头部，显示标题和关闭按钮。 -->
+      <!-- 购物车面板标题；关闭按钮使用抽屉组件自动生成的按钮。 -->
       <div class="cart-panel__header">
-        <div>
-          <span class="cart-panel__eyebrow">YOUR SELECTION</span>
-          <h2 id="cart-title">购物车</h2>
-        </div>
-        <button type="button" class="drawer-close" aria-label="关闭购物车" @click="close">×</button>
+        <h2 id="cart-title">购物车</h2>
+        <p class="cart-panel__subtitle">数量、勾选与删除操作均通过 Mock API 更新。</p>
       </div>
 
       <!-- 购物车内容区域，根据加载、错误和空购物车状态显示不同内容。 -->
@@ -62,45 +60,66 @@
 
           <!-- 商品明细列表，支持选择、调整数量和删除商品。 -->
           <div class="cart-items">
+            <div class="cart-items__header" aria-hidden="true">
+              <span />
+              <span>商品</span>
+              <span>单价</span>
+              <span>数量</span>
+              <span>小计</span>
+            </div>
+
             <article v-for="item in cartItems" :key="item.id" class="cart-item">
-              <el-checkbox
-                class="cart-item__checkbox"
-                :value="Boolean(item.selected)"
-                :disabled="isItemLoading(item.id)"
-                :aria-label="`选择${item.name}`"
-                @change="toggleItem(item, $event)"
-              />
-              <img :src="item.image" :alt="item.name" class="cart-item__image" />
-              <div class="cart-item__main">
-                <h3>{{ item.name }}</h3>
-                <span class="cart-item__unit-price">¥ {{ money(item.price) }}</span>
-                <div class="quantity-control">
-                  <el-button
-                    icon="el-icon-minus"
-                    circle
-                    :disabled="item.quantity <= 1 || isItemLoading(item.id)"
-                    aria-label="减少数量"
-                    @click="adjustQuantity(item, -1)"
-                  />
-                  <el-input-number
-                    :value="item.quantity"
-                    :min="1"
-                    :controls="false"
-                    :disabled="isItemLoading(item.id)"
-                    aria-label="商品数量"
-                    @change="changeQuantity(item, $event)"
-                  />
-                  <el-button
-                    icon="el-icon-plus"
-                    circle
-                    :disabled="isItemLoading(item.id)"
-                    aria-label="增加数量"
-                    @click="adjustQuantity(item, 1)"
-                  />
-                </div>
+              <!-- 商品选择区域：显示复选框并更新当前商品的勾选状态。 -->
+              <div class="cart-item__selection">
+                <el-checkbox
+                  class="cart-item__checkbox"
+                  :value="Boolean(item.selected)"
+                  :disabled="isItemLoading(item.id)"
+                  :aria-label="`选择${item.name}`"
+                  @change="toggleItem(item, $event)"
+                />
               </div>
+
+              <!-- 商品信息区域：显示商品图片和商品名称。 -->
+              <div class="cart-item__product">
+                <img :src="item.image" :alt="item.name" class="cart-item__image" />
+                <h3>{{ item.name }}</h3>
+              </div>
+
+              <!-- 商品单价区域：显示当前商品的单件价格。 -->
+              <div class="cart-item__price">
+                <span class="cart-item__unit-price">¥ {{ item.price }}</span>
+              </div>
+
+              <!-- 数量控制区域：支持减少、输入和增加商品数量。 -->
+              <div class="quantity-control">
+                <el-button
+                  icon="el-icon-minus"
+                  circle
+                  :disabled="item.quantity <= 1 || isItemLoading(item.id)"
+                  aria-label="减少数量"
+                  @click="adjustQuantity(item, -1)"
+                />
+                <el-input-number
+                  :value="item.quantity"
+                  :min="1"
+                  :controls="false"
+                  :disabled="isItemLoading(item.id)"
+                  aria-label="商品数量"
+                  @change="changeQuantity(item, $event)"
+                />
+                <el-button
+                  icon="el-icon-plus"
+                  circle
+                  :disabled="isItemLoading(item.id)"
+                  aria-label="增加数量"
+                  @click="adjustQuantity(item, 1)"
+                />
+              </div>
+
+              <!-- 小计和删除区域：显示当前商品小计，并提供删除按钮。 -->
               <div class="cart-item__aside">
-                <strong>¥ {{ money(item.price * item.quantity) }}</strong>
+                <strong>¥ {{ item.price * item.quantity }}</strong>
                 <button
                   type="button"
                   class="remove-button"
@@ -120,7 +139,7 @@
       <footer v-if="!cartLoading && !cartError && !isCartEmpty" class="cart-panel__footer">
         <div class="cart-total">
           <span>合计（已选 {{ selectedCount }} 件）</span>
-          <strong>¥ {{ money(selectedTotal) }}</strong>
+          <strong>¥ {{ selectedTotal }}</strong>
         </div>
         <el-button class="checkout-button" type="primary" :disabled="selectedCount === 0" @click="checkout">
           结算
@@ -165,9 +184,6 @@ export default {
     handleOpen() {
       this.loadCart()
     },
-    close() {
-      this.localVisible = false
-    },
     loadCart() {
       return this.$store.dispatch('fetchCartItems')
     },
@@ -204,19 +220,13 @@ export default {
         this.$message.error('数量更新失败，请稍后重试')
       }
     },
-    removeItem(item) {
-      this.$confirm(`确定要删除“${item.name}”吗？`, '删除商品', {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).then(async () => {
-        try {
-          await this.$store.dispatch('deleteCartItem', item.id)
-          this.$message.success('商品已删除')
-        } catch (error) {
-          this.$message.error('删除失败，请稍后重试')
-        }
-      }).catch(() => {})
+    async removeItem(item) {
+      try {
+        await this.$store.dispatch('deleteCartItem', item.id)
+        this.$message.success('商品已删除')
+      } catch (error) {
+        this.$message.error('删除失败，请稍后重试')
+      }
     },
     checkout() {
       if (!this.selectedCount) {
@@ -224,9 +234,6 @@ export default {
         return
       }
       this.$message.success('结算功能演示：订单已准备完成')
-    },
-    money(value) {
-      return Number(value).toFixed(2)
     },
   },
 }
