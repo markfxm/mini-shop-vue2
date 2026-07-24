@@ -37,17 +37,10 @@
           <el-button type="text" @click="loadCart">重新加载</el-button>
         </el-alert>
 
-        <!-- 购物车为空时，显示空购物车提示。 -->
-        <div v-else-if="isCartEmpty" class="cart-state">
-          <i class="el-icon-shopping-cart-2 cart-state__icon" />
-          <strong>购物车还是空的</strong>
-          <span>把喜欢的商品加入购物车吧</span>
-        </div>
-
-        <!-- 购物车有商品时，显示选择工具栏和商品明细。 -->
+        <!-- 购物车有商品或为空时，都保留商品列表表头。 -->
         <template v-else>
-          <!-- 商品选择工具栏，支持全选并显示已选商品数量。 -->
-          <div class="selection-toolbar">
+          <!-- 商品选择工具栏，购物车为空时不显示。 -->
+          <div v-if="!isCartEmpty" class="selection-toolbar">
             <el-checkbox
               :value="allSelected"
               :indeterminate="someSelected && !allSelected"
@@ -60,7 +53,7 @@
 
           <!-- 商品明细列表，支持选择、调整数量和删除商品。 -->
           <div class="cart-items">
-            <div class="cart-items__header" aria-hidden="true">
+            <div class="cart-items__header">
               <span />
               <span>商品</span>
               <span>单价</span>
@@ -68,7 +61,14 @@
               <span>小计</span>
             </div>
 
-            <article v-for="item in cartItems" :key="item.id" class="cart-item">
+            <!-- 购物车为空时，在表头下显示空购物车提示。 -->
+            <div v-if="isCartEmpty" class="cart-state">
+              <i class="el-icon-shopping-cart-2 cart-state__icon" />
+              <strong>购物车还是空的</strong>
+              <span>把喜欢的商品加入购物车吧</span>
+            </div>
+
+            <article v-else v-for="item in cartItems" :key="item.id" class="cart-item">
               <!-- 商品选择区域：显示复选框并更新当前商品的勾选状态。 -->
               <div class="cart-item__selection">
                 <el-checkbox
@@ -103,6 +103,7 @@
                 <el-input-number
                   :value="item.quantity"
                   :min="1"
+                  :max="item.stock"
                   :controls="false"
                   :disabled="isItemLoading(item.id)"
                   aria-label="商品数量"
@@ -111,7 +112,7 @@
                 <el-button
                   icon="el-icon-plus"
                   circle
-                  :disabled="isItemLoading(item.id)"
+                  :disabled="isItemLoading(item.id) || isAtStock(item)"
                   aria-label="增加数量"
                   @click="adjustQuantity(item, 1)"
                 />
@@ -190,6 +191,13 @@ export default {
     isItemLoading(id) {
       return this.isCartItemLoading(id)
     },
+    isAtStock(item) {
+      return Number(item.quantity) >= Number(item.stock)
+    },
+    normalizeCartQuantity(quantity, stock) {
+      const normalizedQuantity = Math.max(1, Math.floor(Number(quantity) || 1))
+      return Math.min(normalizedQuantity, Number(stock))
+    },
     async toggleItem(item, selected) {
       try {
         await this.$store.dispatch('updateCartItem', { id: item.id, payload: { selected } })
@@ -205,10 +213,10 @@ export default {
       }
     },
     adjustQuantity(item, delta) {
-      this.changeQuantity(item, Math.max(1, Number(item.quantity) + delta))
+      this.changeQuantity(item, this.normalizeCartQuantity(Number(item.quantity) + delta, item.stock))
     },
     async changeQuantity(item, quantity) {
-      const normalizedQuantity = Math.max(1, Number(quantity) || 1)
+      const normalizedQuantity = this.normalizeCartQuantity(quantity, item.stock)
       if (normalizedQuantity === Number(item.quantity)) return
 
       try {

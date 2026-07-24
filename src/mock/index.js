@@ -26,6 +26,7 @@ let cartItems = [
     productId: 1,
     name: '机械键盘',
     price: 299,
+    stock: 12,
     quantity: 1,
     selected: true,
     image: 'https://picsum.photos/seed/keyboard/320/220',
@@ -69,6 +70,13 @@ mock.onPatch(/\/cart-items\/\d+/).reply((config) => {
 
   if (!item) {
     return [404, { message: '购物车商品不存在' }]
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'quantity')) {
+    const quantity = Number(payload.quantity)
+    if (quantity > Number(item.stock)) {
+      return [400, { message: '商品数量不能超过库存' }]
+    }
   }
 
   Object.assign(item, payload)

@@ -138,7 +138,13 @@ export default new Vuex.Store({
       try {
         const existing = state.cartItems.find((item) => item.productId === product.id)
         if (existing) {
-          const response = await updateCartItem(existing.id, { quantity: existing.quantity + 1 })
+          if (Number(existing.quantity) >= Number(product.stock)) {
+            throw new Error('商品数量已达到库存上限')
+          }
+
+          const response = await updateCartItem(existing.id, {
+            quantity: Math.min(Number(existing.quantity) + 1, Number(product.stock)),
+          })
           commit('UPDATE_CART_ITEM', response.data.data)
           return response.data.data
         }
@@ -147,6 +153,7 @@ export default new Vuex.Store({
           productId: product.id,
           name: product.name,
           price: product.price,
+          stock: product.stock,
           quantity: 1,
           image: product.image,
         })
